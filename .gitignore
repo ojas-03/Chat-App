@@ -1,0 +1,39 @@
+## Visual Studio / VS Code
+.vs/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.sln.docstates
+*.wsuo
+
+## Build results (.NET / C#)
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## Visual Studio cache / temporary files
+*.dtbcache*
+*.vsidx
+*.sqlite
+*.bin
+*.cache
+
+## NuGet Packages
+*.nupkg
+packages/
+!packages/build/
+
+## Local runtime & secrets (Keep templates committed, ignore local secrets)
+appsettings.*.local.json
+appsettings.Production.json
+*.local.json
+
+## OS generated files
+.DS_Store
+Thumbs.db
+
+## Other files
+encryption-plan.md
+FUTURE_READY_ARCHITECTURE_SPEC.md
