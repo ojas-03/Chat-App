@@ -7,7 +7,23 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
+using Microsoft.AspNetCore.Http.Features;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Disable Windows EventLog logging provider to prevent access-denied logger crashes
+if (OperatingSystem.IsWindows())
+{
+    builder.Logging.AddFilter<Microsoft.Extensions.Logging.EventLog.EventLogLoggerProvider>(null, LogLevel.None);
+}
+
+// Configure FormOptions to buffer multipart uploads up to 50MB in RAM
+// Prevents ASP.NET Core from writing to C:\Users\...\AppData\Local\Temp (which triggers Access Denied)
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MemoryBufferThreshold = 50 * 1024 * 1024; // 50 MB
+    options.MultipartBodyLengthLimit = 50 * 1024 * 1024; // 50 MB
+});
 
 // ----- Database -----
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -17,7 +33,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]!);
+        var secretKey = builder.Configuration["Jwt:SecretKey"];
+        if (string.IsNullOrWhiteSpace(secretKey) || secretKey.Length < 32)
+        {
+            secretKey = "DefaultDevelopmentSuperSecretKeyForChatApp1234567890!";
+        }
+        var key = Encoding.UTF8.GetBytes(secretKey);
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
@@ -70,10 +91,7 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        var origins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
-                      ?? ["http://localhost:5173"];
-
-        policy.WithOrigins(origins)
+        policy.SetIsOriginAllowed(_ => true)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();

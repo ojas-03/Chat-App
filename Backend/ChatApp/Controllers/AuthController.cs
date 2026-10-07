@@ -87,17 +87,24 @@ public class AuthController : ControllerBase
         [FromForm] string? fullName,
         [FromForm] IFormFile? profilePic)
     {
-        var userId = GetUserId();
-
-        string? profilePicUrl = null;
-        if (profilePic != null)
+        try
         {
-            profilePicUrl = await _cloudinaryService.UploadImageAsync(profilePic);
-        }
+            var userId = GetUserId();
 
-        var request = new UpdateProfileRequest(fullName, profilePicUrl);
-        var profile = await _authService.UpdateProfileAsync(userId, request);
-        return Ok(profile);
+            string? profilePicUrl = null;
+            if (profilePic != null && profilePic.Length > 0)
+            {
+                profilePicUrl = await _cloudinaryService.UploadImageAsync(profilePic);
+            }
+
+            var request = new UpdateProfileRequest(fullName, profilePicUrl);
+            var profile = await _authService.UpdateProfileAsync(userId, request);
+            return Ok(profile);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     private Guid GetUserId()

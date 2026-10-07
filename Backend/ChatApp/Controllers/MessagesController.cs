@@ -42,17 +42,24 @@ public class MessagesController : ControllerBase
         [FromForm] string? text,
         [FromForm] IFormFile? image)
     {
-        var senderId = GetUserId();
-
-        string? imageUrl = null;
-        if (image != null)
+        try
         {
-            imageUrl = await _cloudinaryService.UploadImageAsync(image);
-        }
+            var senderId = GetUserId();
 
-        var request = new SendMessageRequest(text, imageUrl);
-        var message = await _messageService.SendMessageAsync(senderId, receiverId, request);
-        return Created(string.Empty, message);
+            string? imageUrl = null;
+            if (image != null && image.Length > 0)
+            {
+                imageUrl = await _cloudinaryService.UploadImageAsync(image);
+            }
+
+            var request = new SendMessageRequest(text, imageUrl);
+            var message = await _messageService.SendMessageAsync(senderId, receiverId, request);
+            return Created(string.Empty, message);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     private Guid GetUserId()
